@@ -2,8 +2,8 @@
 
 jdk17 but i looked around, hopefully trying to optimize old code. 
 this isnt really anything serious, this is just a side project.
-i dont really know how to code but i'll look around and get help from codex or cursor
-
+i dont really know how to code but i'll look around and get help from codex or cursor.
+theres probably a shit ton of errors but this is just a test and i'll probaly abandon it
 
 
 
