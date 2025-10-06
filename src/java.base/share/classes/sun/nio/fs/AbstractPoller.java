@@ -57,19 +57,17 @@ abstract class AbstractPoller implements Runnable {
     @SuppressWarnings("removal")
     public void start() {
         final Runnable thisRunnable = this;
-        AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public Object run() {
-                Thread thr = new Thread(null,
-                                        thisRunnable,
-                                        "FileSystemWatchService",
-                                        0,
-                                        false);
-                thr.setDaemon(true);
-                thr.start();
-                return null;
-            }
-         });
+        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            // Micro-modernization: lambda for PrivilegedAction; behavior unchanged
+            Thread thr = new Thread(null,
+                                    thisRunnable,
+                                    "FileSystemWatchService",
+                                    0,
+                                    false);
+            thr.setDaemon(true);
+            thr.start();
+            return null;
+        });
     }
 
     /**

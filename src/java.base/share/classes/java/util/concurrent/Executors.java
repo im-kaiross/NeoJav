@@ -693,17 +693,15 @@ public class Executors {
         }
 
         public Thread newThread(final Runnable r) {
-            return super.newThread(new Runnable() {
+            // Micro-modernization: lambdas for wrapper and privileged action; behavior unchanged
+            return super.newThread(() -> {
                 @SuppressWarnings("removal")
-                public void run() {
-                    AccessController.doPrivileged(new PrivilegedAction<>() {
-                        public Void run() {
-                            Thread.currentThread().setContextClassLoader(ccl);
-                            r.run();
-                            return null;
-                        }
-                    }, acc);
-                }
+                PrivilegedAction<Void> action = () -> {
+                    Thread.currentThread().setContextClassLoader(ccl);
+                    r.run();
+                    return null;
+                };
+                AccessController.doPrivileged(action, acc);
             });
         }
     }

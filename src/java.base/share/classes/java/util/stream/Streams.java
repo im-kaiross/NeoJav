@@ -835,25 +835,23 @@ final class Streams {
      * any exceptions thrown by the second as suppressed exceptions of the first.
      */
     static Runnable composeWithExceptions(Runnable a, Runnable b) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    a.run();
-                }
-                catch (Throwable e1) {
-                    try {
-                        b.run();
-                    }
-                    catch (Throwable e2) {
-                        try {
-                            e1.addSuppressed(e2);
-                        } catch (Throwable ignore) {}
-                    }
-                    throw e1;
-                }
-                b.run();
+        // Micro-modernization: lambda Runnable; logic unchanged
+        return () -> {
+            try {
+                a.run();
             }
+            catch (Throwable e1) {
+                try {
+                    b.run();
+                }
+                catch (Throwable e2) {
+                    try {
+                        e1.addSuppressed(e2);
+                    } catch (Throwable ignore) {}
+                }
+                throw e1;
+            }
+            b.run();
         };
     }
 
@@ -864,25 +862,23 @@ final class Streams {
      * any exceptions thrown by the second as suppressed exceptions of the first.
      */
     static Runnable composedClose(BaseStream<?, ?> a, BaseStream<?, ?> b) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    a.close();
-                }
-                catch (Throwable e1) {
-                    try {
-                        b.close();
-                    }
-                    catch (Throwable e2) {
-                        try {
-                            e1.addSuppressed(e2);
-                        } catch (Throwable ignore) {}
-                    }
-                    throw e1;
-                }
-                b.close();
+        // Micro-modernization: lambda Runnable; logic unchanged
+        return () -> {
+            try {
+                a.close();
             }
+            catch (Throwable e1) {
+                try {
+                    b.close();
+                }
+                catch (Throwable e2) {
+                    try {
+                        e1.addSuppressed(e2);
+                    } catch (Throwable ignore) {}
+                }
+                throw e1;
+            }
+            b.close();
         };
     }
 }

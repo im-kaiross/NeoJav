@@ -70,13 +70,12 @@ class PollingWatchService
     PollingWatchService() {
         // TBD: Make the number of threads configurable
         scheduledExecutor = Executors
-            .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                 @Override
-                 public Thread newThread(Runnable r) {
-                     Thread t = new Thread(null, r, "FileSystemWatcher", 0, false);
-                     t.setDaemon(true);
-                     return t;
-                 }});
+            .newSingleThreadScheduledExecutor(r -> {
+                // Micro-modernization: lambda ThreadFactory, identical behavior
+                Thread t = new Thread(null, r, "FileSystemWatcher", 0, false);
+                t.setDaemon(true);
+                return t;
+            });
     }
 
     /**
@@ -141,13 +140,10 @@ class PollingWatchService
         // attributes of the entries in the directory.
         try {
             int value = sensitivity;
+            // Micro-modernization: use lambda for PrivilegedExceptionAction, behavior unchanged
             return AccessController.doPrivileged(
-                new PrivilegedExceptionAction<PollingWatchKey>() {
-                    @Override
-                    public PollingWatchKey run() throws IOException {
-                        return doPrivilegedRegister(path, eventSet, value);
-                    }
-                });
+                (PrivilegedExceptionAction<PollingWatchKey>)
+                    () -> doPrivilegedRegister(path, eventSet, value));
         } catch (PrivilegedActionException pae) {
             Throwable cause = pae.getCause();
             if (cause instanceof IOException ioe)
@@ -206,13 +202,11 @@ class PollingWatchService
             }
             map.clear();
         }
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                scheduledExecutor.shutdown();
-                return null;
-            }
-         });
+        // Micro-modernization: lambda for PrivilegedAction
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            scheduledExecutor.shutdown();
+            return null;
+        });
     }
 
     /**
@@ -271,7 +265,8 @@ class PollingWatchService
             this.fileKey = fileKey;
             this.valid = true;
             this.tickCount = 0;
-            this.entries = new HashMap<Path,CacheEntry>();
+            // Micro-modernization: diamond operator
+            this.entries = new HashMap<>();
 
             // get the initial entries in the directory
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
@@ -306,7 +301,8 @@ class PollingWatchService
                 this.events = events;
 
                 // create the periodic task
-                Runnable thunk = new Runnable() { public void run() { poll(); }};
+                // Micro-modernization: lambda Runnable
+                Runnable thunk = this::poll;
                 this.poller = scheduledExecutor
                     .scheduleAtFixedRate(thunk, period, period, TimeUnit.SECONDS);
             }

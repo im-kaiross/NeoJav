@@ -353,14 +353,13 @@ public final class Console implements Flushable
             SharedSecrets.getJavaLangAccess()
                 .registerShutdownHook(0 /* shutdown hook invocation order */,
                     false /* only register if shutdown is not in progress */,
-                    new Runnable() {
-                        public void run() {
-                            try {
-                                if (restoreEcho) {
-                                    echo(true);
-                                }
-                            } catch (IOException x) { }
-                        }
+                    // Micro-modernization: lambda Runnable; identical behavior
+                    () -> {
+                        try {
+                            if (restoreEcho) {
+                                echo(true);
+                            }
+                        } catch (IOException x) { }
                     });
         } catch (IllegalStateException e) {
             // shutdown is already in progress and readPassword is first used

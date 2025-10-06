@@ -65,11 +65,12 @@ class LinkedListDeque : private LinkedListImpl<E, ResourceObj::C_HEAP, F> {
 
   void pop_front() {
     LinkedListNode<E>* h = this->unlink_head();
-    if (h == _tail) {
-      _tail = NULL;
-    }
-
+    // Optimization: perform null check first to avoid comparing a null
+    // head against _tail; behavior is identical, fewer operations.
     if (h != NULL) {
+      if (h == _tail) {
+        _tail = NULL;
+      }
       --_size;
       this->delete_node(h);
     }

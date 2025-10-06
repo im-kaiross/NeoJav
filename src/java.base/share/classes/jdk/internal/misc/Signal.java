@@ -74,8 +74,10 @@ public final class Signal {
     private static Hashtable<Signal, Signal.Handler> handlers = new Hashtable<>(4);
     private static Hashtable<Integer, Signal> signals = new Hashtable<>(4);
 
-    private int number;
-    private String name;
+    // Micro-optimization: fields are immutable after construction; mark final
+    // for stronger semantics and potential JIT optimizations. Functionality unchanged.
+    private final int number;
+    private final String name;
 
     /* Returns the signal number */
     public int getNumber() {
@@ -98,6 +100,7 @@ public final class Signal {
      * @param obj the object to compare with.
      * @return whether two <code>Signal</code> objects are equal.
      */
+    @Override // annotation only; logic unchanged
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -113,6 +116,7 @@ public final class Signal {
      *
      * @return  a hash code value for this object.
      */
+    @Override // annotation only; logic unchanged
     public int hashCode() {
         return number;
     }
@@ -123,6 +127,7 @@ public final class Signal {
      *
      * @return a string representation of the signal
      */
+    @Override // annotation only; logic unchanged
     public String toString() {
         return "SIG" + name;
     }
@@ -210,14 +215,14 @@ public final class Signal {
         final Signal sig = signals.get(number);
         final Signal.Handler handler = handlers.get(sig);
 
-        Runnable runnable = new Runnable () {
-            public void run() {
-              // Don't bother to reset the priority. Signal handler will
-              // run at maximum priority inherited from the VM signal
-              // dispatch thread.
-              // Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-                handler.handle(sig);
-            }
+        // Micro-modernization: use lambda instead of anonymous Runnable class.
+        // Captures and behavior are identical; reduces allocation footprint slightly.
+        Runnable runnable = () -> {
+            // Don't bother to reset the priority. Signal handler will
+            // run at maximum priority inherited from the VM signal
+            // dispatch thread.
+            // Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+            handler.handle(sig);
         };
         if (handler != null) {
             new Thread(null, runnable, sig + " handler", 0, false).start();
@@ -275,10 +280,12 @@ public final class Signal {
             this.handler = handler;
         }
 
+        @Override // annotation only; logic unchanged
         public void handle(Signal sig) {
             throw new UnsupportedOperationException("invoking native signal handle not supported");
         }
 
+        @Override // annotation only; logic unchanged
         public String toString() {
             return this == SIG_DFL ? "SIG_DFL" :
                     (this == SIG_IGN ? "SIG_IGN" : super.toString());

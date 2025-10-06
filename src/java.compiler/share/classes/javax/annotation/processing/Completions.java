@@ -25,6 +25,8 @@
 
 package javax.annotation.processing;
 
+import java.util.Objects; // Optimization: use null-check utility and finalize fields
+
 /**
  * Utility class for assembling {@link Completion} objects.
  *
@@ -38,14 +40,14 @@ public class Completions {
     private Completions() {}
 
     private static class SimpleCompletion implements Completion {
-        private String value;
-        private String message;
+        // Make fields final; use non-null contract enforced in constructor.
+        private final String value;
+        private final String message;
 
         SimpleCompletion(String value, String message) {
-            if (value == null || message == null)
-                throw new NullPointerException("Null completion strings not accepted.");
-            this.value = value;
-            this.message = message;
+            // Use Objects.requireNonNull for concise null checks and consistent NPEs.
+            this.value = Objects.requireNonNull(value, "value");
+            this.message = Objects.requireNonNull(message, "message");
         }
 
         public String getValue() {

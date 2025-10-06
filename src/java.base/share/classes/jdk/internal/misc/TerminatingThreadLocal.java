@@ -66,7 +66,9 @@ public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
      * on all instances registered in current thread.
      */
     public static void threadTerminated() {
-        for (TerminatingThreadLocal<?> ttl : REGISTRY.get()) {
+        // Micro-optimization: cache ThreadLocal.get() result to avoid repeated lookups.
+        final Collection<TerminatingThreadLocal<?>> locals = REGISTRY.get();
+        for (TerminatingThreadLocal<?> ttl : locals) {
             ttl._threadTerminated();
         }
     }
@@ -79,7 +81,9 @@ public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
      * @param tl the ThreadLocal to register
      */
     public static void register(TerminatingThreadLocal<?> tl) {
-        REGISTRY.get().add(tl);
+        // Micro-optimization: cache get() result
+        final Collection<TerminatingThreadLocal<?>> locals = REGISTRY.get();
+        locals.add(tl);
     }
 
     /**
@@ -88,7 +92,9 @@ public class TerminatingThreadLocal<T> extends ThreadLocal<T> {
      * @param tl the ThreadLocal to unregister
      */
     private static void unregister(TerminatingThreadLocal<?> tl) {
-        REGISTRY.get().remove(tl);
+        // Micro-optimization: cache get() result
+        final Collection<TerminatingThreadLocal<?>> locals = REGISTRY.get();
+        locals.remove(tl);
     }
 
     /**

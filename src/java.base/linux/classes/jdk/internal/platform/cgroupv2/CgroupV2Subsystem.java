@@ -30,7 +30,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import jdk.internal.platform.CgroupInfo;
 import jdk.internal.platform.CgroupSubsystem;
@@ -46,7 +45,9 @@ public class CgroupV2Subsystem implements CgroupSubsystem {
     private static final String PROVIDER_NAME = "cgroupv2";
     private static final int PER_CPU_SHARES = 1024;
     private static final String MAX_VAL = "max";
-    private static final Object EMPTY_STR = "";
+    // Token names for io.stat metrics (reuse same arrays to avoid reallocation)
+    private static final String[] RW_IO_TOKENS = { "rios", "wios" };
+    private static final String[] RW_BYTES_TOKENS = { "rbytes", "wbytes" };
     private static final long NO_SWAP = 0;
 
     private CgroupV2Subsystem(CgroupSubsystemController unified) {
@@ -179,11 +180,11 @@ public class CgroupV2Subsystem implements CgroupSubsystem {
         if ( x <= PER_CPU_SHARES ) {
             return PER_CPU_SHARES; // mimic cgroups v1
         }
-        int f = x/PER_CPU_SHARES;
+        int f = x / PER_CPU_SHARES;
         int lower_multiple = f * PER_CPU_SHARES;
         int upper_multiple = (f + 1) * PER_CPU_SHARES;
-        int distance_lower = Math.max(lower_multiple, x) - Math.min(lower_multiple, x);
-        int distance_upper = Math.max(upper_multiple, x) - Math.min(upper_multiple, x);
+        int distance_lower = Math.abs(lower_multiple - x);
+        int distance_upper = Math.abs(upper_multiple - x);
         x = distance_lower <= distance_upper ? lower_multiple : upper_multiple;
         return x;
     }
@@ -237,7 +238,8 @@ public class CgroupV2Subsystem implements CgroupSubsystem {
     }
 
     private int[] getCpuSet(String cpuSetVal) {
-        if (cpuSetVal == null || EMPTY_STR.equals(cpuSetVal)) {
+        // Prefer isEmpty() over string constant compare for emptiness check
+        if (cpuSetVal == null || cpuSetVal.isEmpty()) {
             return INT_ARRAY_UNAVAILABLE;
         }
         return CgroupSubsystemController.stringRangeToIntArray(cpuSetVal);
@@ -326,9 +328,11 @@ public class CgroupV2Subsystem implements CgroupSubsystem {
 
     private long sumTokensIOStat(Function<String, Long> mapFunc) {
         try {
+            // Sum as primitive longs to reduce boxing/collector overhead
             return CgroupUtil.readFilePrivileged(Paths.get(unified.path(), "io.stat"))
                                 .map(mapFunc)
-                                .collect(Collectors.summingLong(e -> e));
+                                .mapToLong(Long::longValue)
+                                .sum();
         } catch (UncheckedIOException e) {
             return CgroupSubsystem.LONG_RETVAL_UNLIMITED;
         } catch (IOException e) {
@@ -336,26 +340,16 @@ public class CgroupV2Subsystem implements CgroupSubsystem {
         }
     }
 
-    private static String[] getRWIOMatchTokenNames() {
-        return new String[] { "rios", "wios" };
-    }
-
-    private static String[] getRWBytesIOMatchTokenNames() {
-        return new String[] { "rbytes", "wbytes" };
-    }
-
     public static Long lineToRandWIOs(String line) {
-        String[] matchNames = getRWIOMatchTokenNames();
-        return ioStatLineToLong(line, matchNames);
+        return ioStatLineToLong(line, RW_IO_TOKENS);
     }
 
     public static Long lineToRBytesAndWBytesIO(String line) {
-        String[] matchNames = getRWBytesIOMatchTokenNames();
-        return ioStatLineToLong(line, matchNames);
+        return ioStatLineToLong(line, RW_BYTES_TOKENS);
     }
 
     private static Long ioStatLineToLong(String line, String[] matchNames) {
-        if (line == null || EMPTY_STR.equals(line)) {
+        if (line == null || line.isEmpty()) {
             return Long.valueOf(0);
         }
         String[] tokens = line.split("\\s+");

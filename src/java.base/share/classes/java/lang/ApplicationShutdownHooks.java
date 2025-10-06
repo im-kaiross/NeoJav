@@ -41,11 +41,8 @@ class ApplicationShutdownHooks {
         try {
             Shutdown.add(1 /* shutdown hook invocation order */,
                 false /* not registered if shutdown in progress */,
-                new Runnable() {
-                    public void run() {
-                        runHooks();
-                    }
-                }
+                // Micro-modernization: lambda Runnable; identical behavior
+                ApplicationShutdownHooks::runHooks
             );
             hooks = new IdentityHashMap<>();
         } catch (IllegalStateException e) {

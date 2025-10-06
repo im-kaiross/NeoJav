@@ -107,25 +107,21 @@ abstract class AsynchronousChannelGroupImpl
 
     private Runnable bindToGroup(final Runnable task) {
         final AsynchronousChannelGroupImpl thisGroup = this;
-        return new Runnable() {
-            public void run() {
-                Invoker.bindToGroup(thisGroup);
-                task.run();
-            }
+        // Micro-modernization: lambda Runnable; behavior identical
+        return () -> {
+            Invoker.bindToGroup(thisGroup);
+            task.run();
         };
     }
 
     @SuppressWarnings("removal")
     private void startInternalThread(final Runnable task) {
-        AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public Void run() {
-                // internal threads should not be visible to application so
-                // cannot use user-supplied thread factory
-                ThreadPool.defaultThreadFactory().newThread(task).start();
-                return null;
-            }
-         });
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            // internal threads should not be visible to application so
+            // cannot use user-supplied thread factory
+            ThreadPool.defaultThreadFactory().newThread(task).start();
+            return null;
+        });
     }
 
     protected final void startThreads(Runnable task) {
@@ -250,12 +246,10 @@ abstract class AsynchronousChannelGroupImpl
     @SuppressWarnings("removal")
     private void shutdownExecutors() {
         AccessController.doPrivileged(
-            new PrivilegedAction<>() {
-                public Void run() {
-                    pool.executor().shutdown();
-                    timeoutExecutor.shutdown();
-                    return null;
-                }
+            (PrivilegedAction<Void>) () -> {
+                pool.executor().shutdown();
+                timeoutExecutor.shutdown();
+                return null;
             },
             null,
             new RuntimePermission("modifyThread"));
@@ -328,18 +322,12 @@ abstract class AsynchronousChannelGroupImpl
             @SuppressWarnings("removal")
             final AccessControlContext acc = AccessController.getContext();
             final Runnable delegate = task;
-            task = new Runnable() {
-                @SuppressWarnings("removal")
-                @Override
-                public void run() {
-                    AccessController.doPrivileged(new PrivilegedAction<>() {
-                        @Override
-                        public Void run() {
-                            delegate.run();
-                            return null;
-                        }
-                    }, acc);
-                }
+            // Micro-modernization: lambdas for wrapper and privileged action
+            task = () -> {
+                AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                    delegate.run();
+                    return null;
+                }, acc);
             };
         }
         executeOnPooledThread(task);

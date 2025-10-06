@@ -26,6 +26,7 @@
 package javax.lang.model.util;
 
 import java.util.Collections;
+import java.util.Collection; // Optimization: allow capacity hints for lists/sets
 import java.util.List;
 import java.util.Set;
 import java.util.EnumSet;
@@ -225,7 +226,12 @@ public class ElementFilter {
     private static <E extends Element> List<E> listFilter(Iterable<? extends Element> elements,
                                                           Set<ElementKind> targetKinds,
                                                           Class<E> clazz) {
-        List<E> list = new ArrayList<>();
+        // Optimization: pre-size ArrayList if source is a Collection to reduce resizes.
+        int initialCapacity = 10;
+        if (elements instanceof Collection<?>) {
+            initialCapacity = ((Collection<?>) elements).size();
+        }
+        List<E> list = new ArrayList<>(initialCapacity);
         for (Element e : elements) {
             if (targetKinds.contains(e.getKind()))
                 list.add(clazz.cast(e));
@@ -238,7 +244,10 @@ public class ElementFilter {
                                                         Set<ElementKind> targetKinds,
                                                         Class<E> clazz) {
         // Return set preserving iteration order of input set.
-        Set<E> set = new LinkedHashSet<>();
+        // Optimization: pre-size LinkedHashSet to reduce rehashing.
+        int expectedSize = elements.size();
+        int capacity = Math.max(16, (int)(expectedSize / 0.75f) + 1);
+        Set<E> set = new LinkedHashSet<>(capacity);
         for (Element e : elements) {
             if (targetKinds.contains(e.getKind()))
                 set.add(clazz.cast(e));
@@ -300,7 +309,12 @@ public class ElementFilter {
     private static <D extends Directive> List<D> listFilter(Iterable<? extends Directive> directives,
                                                           DirectiveKind directiveKind,
                                                           Class<D> clazz) {
-        List<D> list = new ArrayList<>();
+        // Optimization: pre-size ArrayList if source is a Collection to reduce resizes.
+        int initialCapacity = 10;
+        if (directives instanceof Collection<?>) {
+            initialCapacity = ((Collection<?>) directives).size();
+        }
+        List<D> list = new ArrayList<>(initialCapacity);
         for (Directive d : directives) {
             if (d.getKind() == directiveKind)
                 list.add(clazz.cast(d));

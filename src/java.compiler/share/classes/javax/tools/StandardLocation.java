@@ -131,13 +131,13 @@ public enum StandardLocation implements Location {
                 locations.putIfAbsent(location.getName(), location);
         }
         name.getClass(); /* null-check */
-        locations.putIfAbsent(name, new Location() {
-                @Override
-                public String getName() { return name; }
-                @Override
-                public boolean isOutputLocation() { return name.endsWith("_OUTPUT"); }
-            });
-        return locations.get(name);
+        // Optimization: use computeIfAbsent to avoid redundant lookups.
+        return locations.computeIfAbsent(name, n -> new Location() {
+            @Override
+            public String getName() { return n; }
+            @Override
+            public boolean isOutputLocation() { return n.endsWith("_OUTPUT"); }
+        });
     }
     //where
         private static final ConcurrentMap<String,Location> locations

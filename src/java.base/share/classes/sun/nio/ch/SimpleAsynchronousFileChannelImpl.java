@@ -193,8 +193,8 @@ public class SimpleAsynchronousFileChannelImpl
 
         final PendingFuture<FileLock,A> result = (handler == null) ?
             new PendingFuture<FileLock,A>(this) : null;
-        Runnable task = new Runnable() {
-            public void run() {
+        Runnable task = () -> {
+            // Micro-modernization: lambda Runnable; logic unchanged
                 Throwable exc = null;
 
                 int ti = threads.add();
@@ -224,7 +224,6 @@ public class SimpleAsynchronousFileChannelImpl
                 } else {
                     Invoker.invokeUnchecked(handler, attachment, fli, exc);
                 }
-            }
         };
         boolean executed = false;
         try {
@@ -308,8 +307,8 @@ public class SimpleAsynchronousFileChannelImpl
 
         final PendingFuture<Integer,A> result = (handler == null) ?
             new PendingFuture<Integer,A>(this) : null;
-        Runnable task = new Runnable() {
-            public void run() {
+        Runnable task = () -> {
+            // Micro-modernization: lambda Runnable; logic unchanged
                 int n = 0;
                 Throwable exc = null;
 
@@ -334,7 +333,7 @@ public class SimpleAsynchronousFileChannelImpl
                 } else {
                     Invoker.invokeUnchecked(handler, attachment, n, exc);
                 }
-            }
+            
         };
         executor.execute(task);
         return result;
@@ -362,8 +361,8 @@ public class SimpleAsynchronousFileChannelImpl
 
         final PendingFuture<Integer,A> result = (handler == null) ?
             new PendingFuture<Integer,A>(this) : null;
-        Runnable task = new Runnable() {
-            public void run() {
+        Runnable task = () -> {
+            // Micro-modernization: lambda Runnable; logic unchanged
                 int n = 0;
                 Throwable exc = null;
 
@@ -388,7 +387,7 @@ public class SimpleAsynchronousFileChannelImpl
                 } else {
                     Invoker.invokeUnchecked(handler, attachment, n, exc);
                 }
-            }
+            
         };
         executor.execute(task);
         return result;

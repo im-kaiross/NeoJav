@@ -45,7 +45,8 @@ void AsyncLogWriter::enqueue_locked(const AsyncLogMessage& msg) {
   if (_buffer.size() >= _buffer_max_size) {
     bool p_created;
     uint32_t* counter = _stats.add_if_absent(msg.output(), 0, &p_created);
-    *counter = *counter + 1;
+    // Optimization: use pre-increment to avoid extra read/temporary; identical semantics.
+    ++(*counter);
     // drop the enqueueing message.
     os::free(msg.message());
     return;
@@ -70,7 +71,9 @@ void AsyncLogWriter::enqueue(LogFileOutput& output, const LogDecorations& decora
 void AsyncLogWriter::enqueue(LogFileOutput& output, LogMessageBuffer::Iterator msg_iterator) {
   AsyncLogLocker locker;
 
-  for (; !msg_iterator.is_at_end(); msg_iterator++) {
+  // Optimization: prefer pre-increment for iterators to avoid a potential
+  // post-increment temporary; behavior is unchanged.
+  for (; !msg_iterator.is_at_end(); ++msg_iterator) {
     AsyncLogMessage m(&output, msg_iterator.decorations(), os::strdup(msg_iterator.message()));
     enqueue_locked(m);
   }
@@ -143,7 +146,9 @@ void AsyncLogWriter::write() {
     } else if (e->output() == nullptr) {
       // This is a flush token. Record that we found it and then
       // signal the flushing thread after the loop.
-      req++;
+      // Optimization: use pre-increment form for clarity and to avoid
+      // an extra temporary; semantics unchanged.
+      ++req;
     }
   }
 

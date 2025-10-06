@@ -53,8 +53,8 @@ class LinuxFileSystem extends UnixFileSystem {
         static final Set<String> supportedFileAttributeViews =
             supportedFileAttributeViews();
         private static Set<String> supportedFileAttributeViews() {
-            Set<String> result = new HashSet<>();
-            result.addAll(standardFileAttributeViews());
+            // Start with standard set directly in constructor to avoid addAll overhead
+            Set<String> result = new HashSet<>(standardFileAttributeViews());
             // additional Linux-specific views
             result.add("dos");
             result.add("user");

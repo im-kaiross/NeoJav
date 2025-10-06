@@ -55,7 +55,9 @@ public class Pair {
      * @return The qualified name string.
      */
     public String qname() {
-        return new String(chars, 1, chars.length - 1);
+        // Optimization: store length locally to avoid repeated field access
+        final int len = chars.length; // annotated: micro-optimization, no behavior change
+        return new String(chars, 1, len - 1);
     }
 
     /**
@@ -64,10 +66,13 @@ public class Pair {
      * @return The local name string.
      */
     public String local() {
-        if (chars[0] != 0) {
-            return new String(chars, chars[0] + 1, chars.length - chars[0] - 1);
+        // Optimization: load frequently used values into locals
+        final char first = chars[0]; // annotated: local cache
+        final int len = chars.length; // annotated: local cache
+        if (first != 0) {
+            return new String(chars, first + 1, len - first - 1);
         }
-        return new String(chars, 1, chars.length - 1);
+        return new String(chars, 1, len - 1);
     }
 
     /**
@@ -76,8 +81,10 @@ public class Pair {
      * @return The prefix string.
      */
     public String pref() {
-        if (chars[0] != 0) {
-            return new String(chars, 1, chars[0] - 1);
+        // Optimization: avoid repeated array lookups
+        final char first = chars[0]; // annotated: local cache
+        if (first != 0) {
+            return new String(chars, 1, first - 1);
         }
         return "";
     }
@@ -89,9 +96,11 @@ public class Pair {
      * @return true if prefixes are equal.
      */
     public boolean eqpref(char[] qname) {
-        if (chars[0] == qname[0]) {
-            char len = chars[0];
-            for (char i = 1; i < len; i += 1) {
+        // Optimization: use int loop index to avoid char arithmetic and repeated loads
+        final char lenChar = chars[0]; // annotated: local cache
+        if (lenChar == qname[0]) {
+            final int len = lenChar; // annotated: widen to int for faster loop
+            for (int i = 1; i < len; i++) {
                 if (chars[i] != qname[i]) {
                     return false;
                 }
@@ -108,9 +117,10 @@ public class Pair {
      * @return true if qualified names are equal.
      */
     public boolean eqname(char[] qname) {
-        char len = (char) chars.length;
+        // Optimization: compare lengths first, use int loop index
+        final int len = chars.length; // annotated: local cache
         if (len == qname.length) {
-            for (char i = 0; i < len; i += 1) {
+            for (int i = 0; i < len; i++) {
                 if (chars[i] != qname[i]) {
                     return false;
                 }

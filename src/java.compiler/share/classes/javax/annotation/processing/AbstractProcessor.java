@@ -194,11 +194,15 @@ public abstract class AbstractProcessor implements Processor {
     }
 
     private Set<String> arrayToSet(String[] array,
-                                          boolean stripModulePrefixes,
+                                   boolean stripModulePrefixes,
                                    String contentType,
                                    String annotationName) {
         assert array != null;
-        Set<String> set = new HashSet<>();
+        // Optimization: pre-size HashSet based on expected number of entries
+        // to reduce rehashing during population.
+        int expectedSize = array.length;
+        int capacity = Math.max(16, (int)(expectedSize / 0.75f) + 1);
+        Set<String> set = new HashSet<>(capacity);
         for (String s : array) {
             boolean stripped = false;
             if (stripModulePrefixes) {

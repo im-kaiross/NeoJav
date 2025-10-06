@@ -40,8 +40,10 @@ import java.util.Objects;
  * @since 1.6
  */
 public final class DiagnosticCollector<S> implements DiagnosticListener<S> {
-    private List<Diagnostic<? extends S>> diagnostics =
-            Collections.synchronizedList(new ArrayList<Diagnostic<? extends S>>());
+    // Optimization: make the list reference final and use diamond operator.
+    // Behavior is unchanged; we still use a synchronizedList for thread-safety.
+    private final List<Diagnostic<? extends S>> diagnostics =
+            Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Creates a new instance of DiagnosticCollector.

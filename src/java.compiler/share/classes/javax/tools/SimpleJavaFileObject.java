@@ -188,10 +188,12 @@ public class SimpleJavaFileObject implements JavaFileObject {
      * of {@link JavaFileObject} is obeyed.
      */
     public boolean isNameCompatible(String simpleName, Kind kind) {
-        String baseName = simpleName + kind.extension;
-        return kind.equals(getKind())
-            && (baseName.equals(toUri().getPath())
-                || toUri().getPath().endsWith("/" + baseName));
+        // Optimization: avoid repeated toUri().getPath() lookups by caching the path.
+        final String baseName = simpleName + kind.extension;
+        final String path = toUri().getPath();
+        // Optimization: compare enum kinds with '==' instead of equals.
+        return kind == getKind()
+            && (baseName.equals(path) || path.endsWith("/" + baseName));
     }
 
     /**

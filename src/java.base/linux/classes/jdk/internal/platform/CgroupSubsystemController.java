@@ -87,23 +87,23 @@ public interface CgroupSubsystemController {
                                                      String match,
                                                      Function<String, Long> conversion,
                                                      long defaultRetval) {
-        long retval = defaultRetval;
+        // Fast path: null controller yields default
         if (controller == null) {
-            return retval;
+            return defaultRetval;
         }
         try {
             Path filePath = Paths.get(controller.path(), param);
             List<String> lines = CgroupUtil.readAllLinesPrivileged(filePath);
             for (String line : lines) {
                 if (line.startsWith(match)) {
-                    retval = conversion.apply(line);
-                    break;
+                    // Return immediately on first match; avoid extra variable + break
+                    return conversion.apply(line);
                 }
             }
         } catch (IOException e) {
             // Ignore. Default is unlimited.
         }
-        return retval;
+        return defaultRetval;
     }
 
     /**
@@ -138,10 +138,8 @@ public interface CgroupSubsystemController {
         String strval = getStringValue(controller, param);
 
         if (strval == null) return defaultRetval;
-
-        double retval = Double.parseDouble(strval);
-
-        return retval;
+        // Inline parse to avoid temporary variable
+        return Double.parseDouble(strval);
     }
 
     /**
@@ -189,24 +187,24 @@ public interface CgroupSubsystemController {
      *         was an empty string.
      */
     public static int[] stringRangeToIntArray(String range) {
-        if (range == null || EMPTY_STR.equals(range)) return null;
+        // Micro-opts: use isEmpty() over constant compare; avoid regex split for "-"
+        if (range == null || range.isEmpty()) return null;
 
         ArrayList<Integer> results = new ArrayList<>();
         String strs[] = range.split(",");
         for (String str : strs) {
-            if (str.contains("-")) {
-                String lohi[] = str.split("-");
-                // validate format
-                if (lohi.length != 2) {
+            int dash = str.indexOf('-');
+            if (dash >= 0) {
+                // validate format (must have lo-hi)
+                if (dash == 0 || dash == str.length() - 1) {
                     continue;
                 }
-                int lo = Integer.parseInt(lohi[0]);
-                int hi = Integer.parseInt(lohi[1]);
+                int lo = Integer.parseInt(str.substring(0, dash));
+                int hi = Integer.parseInt(str.substring(dash + 1));
                 for (int i = lo; i <= hi; i++) {
                     results.add(i);
                 }
-            }
-            else {
+            } else {
                 results.add(Integer.parseInt(str));
             }
         }

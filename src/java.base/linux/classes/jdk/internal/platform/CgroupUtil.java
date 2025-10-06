@@ -67,8 +67,8 @@ public final class CgroupUtil {
                 Files.newBufferedReader(Paths.get(controller.path(), param));
         try (@SuppressWarnings("removal") BufferedReader bufferedReader =
                      AccessController.doPrivileged(pea)) {
-            String line = bufferedReader.readLine();
-            return line;
+            // Inline return to avoid a needless temporary variable
+            return bufferedReader.readLine();
         } catch (PrivilegedActionException e) {
             unwrapIOExceptionAndRethrow(e);
             throw new InternalError(e.getCause());

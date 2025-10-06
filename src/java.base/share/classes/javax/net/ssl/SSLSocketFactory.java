@@ -88,18 +88,16 @@ public abstract class SSLSocketFactory extends SocketFactory {
 
     @SuppressWarnings("removal")
     static String getSecurityProperty(final String name) {
-        return AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public String run() {
-                String s = java.security.Security.getProperty(name);
-                if (s != null) {
-                    s = s.trim();
-                    if (s.isEmpty()) {
-                        s = null;
-                    }
+        // Micro-modernization: use lambda PrivilegedAction; behavior unchanged
+        return AccessController.doPrivileged((PrivilegedAction<String>) () -> {
+            String s = java.security.Security.getProperty(name);
+            if (s != null) {
+                s = s.trim();
+                if (s.isEmpty()) {
+                    s = null;
                 }
-                return s;
             }
+            return s;
         });
     }
 

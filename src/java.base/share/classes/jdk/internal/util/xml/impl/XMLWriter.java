@@ -41,7 +41,8 @@ import jdk.internal.util.xml.XMLStreamException;
  */
 public class XMLWriter {
 
-    private Writer _writer;
+    // Optimization: make writer final to enable JIT inlining/escape analysis without changing behavior
+    private final Writer _writer; // annotated: final for immutability; name unchanged
     /**
      * In some cases, this charset encoder is used to determine if a char is
      * encodable by underlying writer. For example, an 8-bit char from the
@@ -49,6 +50,9 @@ public class XMLWriter {
      * chars are escaped using XML numeric entities.
      */
     private CharsetEncoder _encoder = null;
+
+    // Optimization: cache line separator once to avoid repeated System property lookup
+    private static final String LINE_SEP = System.lineSeparator(); // annotated: cache value; behavior identical
 
     public XMLWriter(OutputStream os, String encoding, Charset cs) throws XMLStreamException {
         _encoder = cs.newEncoder();
@@ -70,7 +74,8 @@ public class XMLWriter {
     public void write(String s)
             throws XMLStreamException {
         try {
-            _writer.write(s.toCharArray());
+            // Optimization: avoid allocating a new char[] for each write
+            _writer.write(s); // annotated: use Writer.write(String) to reduce allocations
 //            _writer.write(s.getBytes(Charset.forName(_encoding)));
         } catch (IOException e) {
             throw new XMLStreamException("I/O error", e);
@@ -123,9 +128,9 @@ public class XMLWriter {
     }
 
     private void nl() throws XMLStreamException {
-        String lineEnd = System.lineSeparator();
         try {
-            _writer.write(lineEnd);
+            // Optimization: reuse cached line separator constant
+            _writer.write(LINE_SEP); // annotated: use cached constant; same output
         } catch (IOException e) {
             throw new XMLStreamException("I/O error", e);
         }

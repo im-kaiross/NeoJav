@@ -77,13 +77,9 @@ public class TrustManagerFactory {
     @SuppressWarnings("removal")
     public static final String getDefaultAlgorithm() {
         String type;
-        type = AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public String run() {
-                return Security.getProperty(
-                    "ssl.TrustManagerFactory.algorithm");
-            }
-        });
+        // Micro-modernization: lambda PrivilegedAction; behavior unchanged
+        type = AccessController.doPrivileged((PrivilegedAction<String>) () ->
+            Security.getProperty("ssl.TrustManagerFactory.algorithm"));
         if (type == null) {
             type = "SunX509";
         }

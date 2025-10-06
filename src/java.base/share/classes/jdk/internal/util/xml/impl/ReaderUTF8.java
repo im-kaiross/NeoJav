@@ -44,7 +44,8 @@ import java.io.UnsupportedEncodingException;
  */
 public class ReaderUTF8 extends Reader {
 
-    private InputStream is;
+    // Optimization: make stream final; it is never reassigned
+    private final InputStream is; // annotated: final for immutability; name unchanged
 
     /**
      * Constructor.
@@ -64,6 +65,7 @@ public class ReaderUTF8 extends Reader {
      * @exception IOException If any IO errors occur.
      * @exception UnsupportedEncodingException If UCS-4 character occur in the stream.
      */
+    @Override // annotated: clarify overriding; no behavior change
     public int read(char[] cbuf, int off, int len) throws IOException {
         int num = 0;
         int val;
@@ -102,6 +104,7 @@ public class ReaderUTF8 extends Reader {
      * @exception IOException If any IO errors occur.
      * @exception UnsupportedEncodingException If UCS-4 character occur in the stream.
      */
+    @Override // annotated: clarify overriding; no behavior change
     public int read() throws IOException {
         int val;
         if ((val = is.read()) < 0) {
@@ -132,6 +135,7 @@ public class ReaderUTF8 extends Reader {
      *
      * @exception IOException If any IO errors occur.
      */
+    @Override // annotated: clarify overriding; no behavior change
     public void close() throws IOException {
         is.close();
     }

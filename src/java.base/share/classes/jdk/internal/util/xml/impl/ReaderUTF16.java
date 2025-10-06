@@ -34,8 +34,9 @@ import java.io.IOException;
  */
 public class ReaderUTF16 extends Reader {
 
-    private InputStream is;
-    private char bo;
+    // Optimization: make fields final; they are set once in the constructor
+    private final InputStream is; // annotated: final for immutability; name unchanged
+    private final char bo;        // annotated: final for immutability; name unchanged
 
     /**
      * Constructor.
@@ -68,6 +69,7 @@ public class ReaderUTF16 extends Reader {
      * @param len Maximum number of characters to read.
      * @exception IOException If any IO errors occur.
      */
+    @Override // annotated: clarify overriding; no behavior change
     public int read(char[] cbuf, int off, int len) throws IOException {
         int num = 0;
         int val;
@@ -98,6 +100,7 @@ public class ReaderUTF16 extends Reader {
      *  (0x0000-0xffff), or -1 if the end of the stream has been reached.
      * @exception IOException If any IO errors occur.
      */
+    @Override // annotated: clarify overriding; no behavior change
     public int read() throws IOException {
         int val;
         if ((val = is.read()) < 0) {
@@ -116,6 +119,7 @@ public class ReaderUTF16 extends Reader {
      *
      * @exception IOException If any IO errors occur.
      */
+    @Override // annotated: clarify overriding; no behavior change
     public void close() throws IOException {
         is.close();
     }

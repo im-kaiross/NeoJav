@@ -65,13 +65,9 @@ public class KeyManagerFactory {
     @SuppressWarnings("removal")
     public static final String getDefaultAlgorithm() {
         String type;
-        type = AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public String run() {
-                return Security.getProperty(
-                    "ssl.KeyManagerFactory.algorithm");
-            }
-        });
+        // Micro-modernization: lambda PrivilegedAction; behavior unchanged
+        type = AccessController.doPrivileged((PrivilegedAction<String>) () ->
+            Security.getProperty("ssl.KeyManagerFactory.algorithm"));
         if (type == null) {
             type = "SunX509";
         }

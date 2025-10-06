@@ -41,6 +41,8 @@ import java.util.regex.Pattern;
 class LinuxFileStore
     extends UnixFileStore
 {
+    // Hoist non-digit pattern to a static final to avoid recompilation
+    private static final Pattern NON_DIGITS = Pattern.compile("\\D+");
     // used when checking if extended attributes are enabled or not
     private volatile boolean xattrChecked;
     private volatile boolean xattrEnabled;
@@ -107,12 +109,12 @@ class LinuxFileStore
 
     // get kernel version as a three element array {major, minor, micro}
     private static int[] getKernelVersion() {
-        Pattern pattern = Pattern.compile("\\D+");
-        String[] matches = pattern.split(System.getProperty("os.version"));
+        String[] matches = NON_DIGITS.split(System.getProperty("os.version"));
         int[] majorMinorMicro = new int[3];
         int length = Math.min(matches.length, majorMinorMicro.length);
         for (int i = 0; i < length; i++) {
-            majorMinorMicro[i] = Integer.valueOf(matches[i]);
+            // Use parseInt to avoid boxing overhead from valueOf
+            majorMinorMicro[i] = Integer.parseInt(matches[i]);
         }
         return majorMinorMicro;
     }

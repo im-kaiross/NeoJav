@@ -126,9 +126,10 @@ public final class CleanerImpl implements Runnable {
     @Override
     public void run() {
         Thread t = Thread.currentThread();
-        InnocuousThread mlThread = (t instanceof InnocuousThread)
-                ? (InnocuousThread) t
-                : null;
+        // Micro-modernization: use pattern matching for instanceof for clarity.
+        final InnocuousThread mlThread = (t instanceof InnocuousThread it) ? it : null;
+        // Micro-optimization: hoist timeout constant and use underscore for readability.
+        final long timeoutMillis = 60_000L; // 60 * 1000L
         while (!phantomCleanableList.isListEmpty()) {
             if (mlThread != null) {
                 // Clear the thread locals
@@ -137,7 +138,7 @@ public final class CleanerImpl implements Runnable {
             try {
                 // Wait for a Ref, with a timeout to avoid getting hung
                 // due to a race with clear/clean
-                Cleanable ref = (Cleanable) queue.remove(60 * 1000L);
+                Cleanable ref = (Cleanable) queue.remove(timeoutMillis);
                 if (ref != null) {
                     ref.clean();
                 }

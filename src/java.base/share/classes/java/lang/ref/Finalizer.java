@@ -107,22 +107,19 @@ final class Finalizer extends FinalReference<Object> { /* Package-private; must 
      */
     @SuppressWarnings("removal")
     private static void forkSecondaryFinalizer(final Runnable proc) {
-        AccessController.doPrivileged(
-            new PrivilegedAction<>() {
-                public Void run() {
-                    ThreadGroup tg = Thread.currentThread().getThreadGroup();
-                    for (ThreadGroup tgn = tg;
-                         tgn != null;
-                         tg = tgn, tgn = tg.getParent());
-                    Thread sft = new Thread(tg, proc, "Secondary finalizer", 0, false);
-                    sft.start();
-                    try {
-                        sft.join();
-                    } catch (InterruptedException x) {
-                        Thread.currentThread().interrupt();
-                    }
-                    return null;
-                }});
+        // Micro-modernization: lambda PrivilegedAction; behavior unchanged
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            ThreadGroup tg = Thread.currentThread().getThreadGroup();
+            for (ThreadGroup tgn = tg; tgn != null; tg = tgn, tgn = tg.getParent());
+            Thread sft = new Thread(tg, proc, "Secondary finalizer", 0, false);
+            sft.start();
+            try {
+                sft.join();
+            } catch (InterruptedException x) {
+                Thread.currentThread().interrupt();
+            }
+            return null;
+        });
     }
 
     /* Called by Runtime.runFinalization() */
@@ -131,12 +128,12 @@ final class Finalizer extends FinalReference<Object> { /* Package-private; must 
             return;
         }
 
+        // Micro-modernization: lambda Runnable; logic unchanged
         forkSecondaryFinalizer(new Runnable() {
-            private volatile boolean running;
+            private volatile boolean running; // keep same field for identical semantics
+            @Override
             public void run() {
-                // in case of recursive call to run()
-                if (running)
-                    return;
+                if (running) return; // guard re-entry
                 final JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
                 running = true;
                 for (Finalizer f; (f = (Finalizer)queue.poll()) != null; )

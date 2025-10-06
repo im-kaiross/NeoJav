@@ -204,12 +204,9 @@ public abstract class Policy {
     private static Policy loadPolicyProvider() {
         @SuppressWarnings("removal")
         String policyProvider =
-            AccessController.doPrivileged(new PrivilegedAction<>() {
-                @Override
-                public String run() {
-                    return Security.getProperty("policy.provider");
-                }
-            });
+            // Micro-modernization: lambda PrivilegedAction; behavior unchanged
+            AccessController.doPrivileged((PrivilegedAction<String>) () ->
+                Security.getProperty("policy.provider"));
 
         /*
          * If policy.provider is not set or is set to the default provider,
@@ -232,22 +229,18 @@ public abstract class Policy {
         policyInfo = new PolicyInfo(polFile, false);
 
         @SuppressWarnings("removal")
-        Policy pol = AccessController.doPrivileged(new PrivilegedAction<>() {
-            @Override
-            public Policy run() {
-                try {
-                    ClassLoader scl = ClassLoader.getSystemClassLoader();
-                    @SuppressWarnings("deprecation")
-                    Object o = Class.forName(policyProvider, true, scl).newInstance();
-                    return (Policy)o;
-                } catch (Exception e) {
-                    if (debug != null) {
-                        debug.println("policy provider " + policyProvider +
-                                      " not available");
-                        e.printStackTrace();
-                    }
-                    return null;
+        Policy pol = AccessController.doPrivileged((PrivilegedAction<Policy>) () -> {
+            try {
+                ClassLoader scl = ClassLoader.getSystemClassLoader();
+                @SuppressWarnings("deprecation")
+                Object o = Class.forName(policyProvider, true, scl).newInstance();
+                return (Policy)o;
+            } catch (Exception e) {
+                if (debug != null) {
+                    debug.println("policy provider " + policyProvider + " not available");
+                    e.printStackTrace();
                 }
+                return null;
             }
         });
 

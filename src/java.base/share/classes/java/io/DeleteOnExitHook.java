@@ -45,11 +45,8 @@ class DeleteOnExitHook {
         SharedSecrets.getJavaLangAccess()
             .registerShutdownHook(2 /* Shutdown hook invocation order */,
                 true /* register even if shutdown in progress */,
-                new Runnable() {
-                    public void run() {
-                       runHooks();
-                    }
-                }
+                // Micro-modernization: method reference Runnable; identical behavior
+                DeleteOnExitHook::runHooks
         );
     }
 

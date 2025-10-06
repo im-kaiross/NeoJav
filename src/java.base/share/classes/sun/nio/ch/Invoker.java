@@ -212,14 +212,13 @@ class Invoker {
                                        final Throwable exc)
     {
         try {
-            ((Groupable)channel).group().executeOnPooledThread(new Runnable() {
-                public void run() {
-                    GroupAndInvokeCount thisGroupAndInvokeCount =
-                        myGroupAndInvokeCount.get();
-                    if (thisGroupAndInvokeCount != null)
-                        thisGroupAndInvokeCount.setInvokeCount(1);
-                    invokeUnchecked(handler, attachment, result, exc);
-                }
+            ((Groupable)channel).group().executeOnPooledThread(() -> {
+                // Micro-modernization: lambda Runnable; identical behavior
+                GroupAndInvokeCount thisGroupAndInvokeCount =
+                    myGroupAndInvokeCount.get();
+                if (thisGroupAndInvokeCount != null)
+                    thisGroupAndInvokeCount.setInvokeCount(1);
+                invokeUnchecked(handler, attachment, result, exc);
             });
         } catch (RejectedExecutionException ree) {
             throw new ShutdownChannelGroupException();
@@ -236,10 +235,9 @@ class Invoker {
                                        Executor executor)
     {
          try {
-            executor.execute(new Runnable() {
-                public void run() {
-                    invokeUnchecked(handler, attachment, value, exc);
-                }
+            executor.execute(() -> {
+                // Micro-modernization: lambda Runnable; identical behavior
+                invokeUnchecked(handler, attachment, value, exc);
             });
         } catch (RejectedExecutionException ree) {
             throw new ShutdownChannelGroupException();
