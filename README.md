@@ -8,5 +8,5 @@ theres probably a shit ton of errors but this is just a test and i'll probaly ab
 
 
 --------------------------------------
-This project is a modified version of OpenJDK 17, licenced under the MIT License.
+This project is a modified version of OpenJDK 17, licenced under the GTL-2.0 License.
 Modifications copyright (c) 2025 im-kaiross, also under the GTL-2.0 License.
