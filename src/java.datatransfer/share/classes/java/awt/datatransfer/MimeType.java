@@ -322,12 +322,12 @@ MimeTypeParameterList(rawdata.substring(semIndex));
 ClassNotFoundException {
         String s = in.readUTF();
         if (s == null || s.length() == 0) { // long mime type
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             int len = in.readInt();
-            while (len-- > 0) {
-                baos.write(in.readByte());
-            }
-            s = baos.toString();
+            // Optimization: read all bytes at once instead of per-byte loop.
+            // Behavior remains identical (default charset decoding as before).
+            byte[] buf = new byte[len];
+            in.readFully(buf);
+            s = new String(buf);
         }
         try {
             parse(s);

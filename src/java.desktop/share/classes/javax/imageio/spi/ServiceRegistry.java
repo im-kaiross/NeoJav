@@ -226,9 +226,12 @@ public class ServiceRegistry {
      * provider belongs.
      */
     private Iterator<SubRegistry> getSubRegistries(Object provider) {
+        // Optimization: compute provider class once, avoid repeated getClass()
+        // lookups inside the loop; retains identical behavior.
+        Class<?> providerClass = provider.getClass();
         List<SubRegistry> l = new ArrayList<>();
         for (Class<?> c : categoryMap.keySet()) {
-            if (c.isAssignableFrom(provider.getClass())) {
+            if (c.isAssignableFrom(providerClass)) {
                 l.add(categoryMap.get(c));
             }
         }

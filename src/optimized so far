@@ -4,9 +4,6 @@ demo (ignore)
 hotspot
 java.base
 java.compiler
-
-
-
-
-
+java.datatransfer
+java.desktop
 

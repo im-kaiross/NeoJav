@@ -135,10 +135,14 @@ class MimeTypeParameterList implements Cloneable {
                         //    find the end of the token char run
                         lastIndex = currentIndex;
                         currentChar = rawdata.charAt(currentIndex);
-                        while((currentIndex < length) && isTokenChar(currentChar)) {
-                            ++currentIndex;
-                            currentChar = rawdata.charAt(currentIndex);
-                        }
+                while ((currentIndex < length) && isTokenChar(currentChar)) {
+                    ++currentIndex;
+                    // Safety: guard against reading past end of string when
+                    // currentIndex == length after increment.
+                    if (currentIndex < length) {
+                        currentChar = rawdata.charAt(currentIndex);
+                    }
+                }
                         name = rawdata.substring(lastIndex, currentIndex).toLowerCase();
 
                         //    now parse the '=' that separates the name from the value
@@ -164,8 +168,8 @@ class MimeTypeParameterList implements Cloneable {
                                     if(currentIndex < length) {
                                         //    find the next unescaped quote
                                         foundit = false;
-                                        while((currentIndex < length) && !foundit) {
-                                            currentChar = rawdata.charAt(currentIndex);
+                            while ((currentIndex < length) && !foundit) {
+                                currentChar = rawdata.charAt(currentIndex);
                                             if(currentChar == '\\') {
                                                 //    found an escape sequence so pass this and the next character
                                                 currentIndex += 2;
@@ -190,11 +194,14 @@ class MimeTypeParameterList implements Cloneable {
                                     //    nope it's an ordinary token so it ends with a non-token char
                                     lastIndex = currentIndex;
                                     foundit = false;
-                                    while((currentIndex < length) && !foundit) {
+                                    while ((currentIndex < length) && !foundit) {
                                         currentChar = rawdata.charAt(currentIndex);
-
-                                        if(isTokenChar(currentChar)) {
+                                        if (isTokenChar(currentChar)) {
                                             ++currentIndex;
+                                            // Safety: avoid charAt(length) on next loop
+                                            if (currentIndex >= length) {
+                                                break;
+                                            }
                                         } else {
                                             foundit = true;
                                         }
@@ -326,10 +333,13 @@ class MimeTypeParameterList implements Cloneable {
     private static int skipWhiteSpace(String rawdata, int i) {
         int length = rawdata.length();
         if (i < length) {
-            char c =  rawdata.charAt(i);
+            char c = rawdata.charAt(i);
             while ((i < length) && Character.isWhitespace(c)) {
                 ++i;
-                c = rawdata.charAt(i);
+                // Safety: guard charAt when i reaches length
+                if (i < length) {
+                    c = rawdata.charAt(i);
+                }
             }
         }
 

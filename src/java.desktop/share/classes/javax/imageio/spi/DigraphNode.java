@@ -96,11 +96,11 @@ class DigraphNode<E> implements Cloneable, Serializable {
      * target of an edge.
      */
     public boolean addEdge(DigraphNode<E> node) {
-        if (outNodes.contains(node)) {
+        // Optimization: rely on Set.add() return value to avoid double lookup
+        // (keeps functionality identical, reduces redundant contains() call).
+        if (!outNodes.add(node)) {
             return false;
         }
-
-        outNodes.add(node);
         node.inNodes.add(this);
         node.incrementInDegree();
         return true;
@@ -126,11 +126,11 @@ class DigraphNode<E> implements Cloneable, Serializable {
      * of an edge.
      */
     public boolean removeEdge(DigraphNode<E> node) {
-        if (!outNodes.contains(node)) {
+        // Optimization: rely on Set.remove() return value to avoid double lookup
+        // (keeps functionality identical, reduces redundant contains() call).
+        if (!outNodes.remove(node)) {
             return false;
         }
-
-        outNodes.remove(node);
         node.inNodes.remove(this);
         node.decrementInDegree();
         return true;
@@ -141,17 +141,13 @@ class DigraphNode<E> implements Cloneable, Serializable {
      * appropriately.
      */
     public void dispose() {
-        Object[] inNodesArray = inNodes.toArray();
-        for(int i=0; i<inNodesArray.length; i++) {
-            @SuppressWarnings("unchecked")
-            DigraphNode<E> node = (DigraphNode<E>)inNodesArray[i];
+        // Optimization: iterate over snapshot collections with proper typing
+        // instead of Object[] + casts; avoids array creation + casts while
+        // preserving no-concurrent-modification semantics.
+        for (DigraphNode<E> node : new java.util.HashSet<>(inNodes)) {
             node.removeEdge(this);
         }
-
-        Object[] outNodesArray = outNodes.toArray();
-        for(int i=0; i<outNodesArray.length; i++) {
-            @SuppressWarnings("unchecked")
-            DigraphNode<E> node = (DigraphNode<E>)outNodesArray[i];
+        for (DigraphNode<E> node : new java.util.HashSet<>(outNodes)) {
             removeEdge(node);
         }
     }

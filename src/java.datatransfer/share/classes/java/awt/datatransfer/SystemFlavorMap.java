@@ -59,7 +59,8 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
     /**
      * Constant prefix used to tag Java types converted to native platform type.
      */
-    private static String JavaMIME = "JAVA_DATAFLAVOR:";
+    // Make constant explicitly final to avoid accidental reassignment
+    private static final String JavaMIME = "JAVA_DATAFLAVOR:";
 
     private static final Object FLAVOR_MAP_KEY = new Object();
 
@@ -225,7 +226,8 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
                 }
                 int delimiterPosition = line.indexOf('=');
                 String key = line.substring(0, delimiterPosition).replace("\\ ", " ");
-                String[] values = line.substring(delimiterPosition + 1, line.length()).split(",");
+                // Micro-optimization/readability: omit redundant end index
+                String[] values = line.substring(delimiterPosition + 1).split(",");
                 for (String value : values) {
                     try {
                         value = loadConvert(value);
@@ -1020,7 +1022,8 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      *         otherwise
      */
     public static boolean isJavaMIMEType(String str) {
-        return (str != null && str.startsWith(JavaMIME, 0));
+        // startsWith with explicit 0 offset is equivalent; simplify call
+        return (str != null && str.startsWith(JavaMIME));
     }
 
     /**
@@ -1031,8 +1034,9 @@ public final class SystemFlavorMap implements FlavorMap, FlavorTable {
      *         an encoded {@code String} native
      */
     public static String decodeJavaMIMEType(String nat) {
+        // Micro-optimization/readability: omit redundant end index
         return (isJavaMIMEType(nat))
-            ? nat.substring(JavaMIME.length(), nat.length()).trim()
+            ? nat.substring(JavaMIME.length()).trim()
             : null;
     }
 

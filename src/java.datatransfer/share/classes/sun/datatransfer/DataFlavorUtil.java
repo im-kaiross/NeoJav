@@ -146,9 +146,7 @@ public class DataFlavorUtil {
         }
         try {
             return Charset.forName(encoding).name();
-        } catch (IllegalCharsetNameException icne) {
-            return encoding;
-        } catch (UnsupportedCharsetException uce) {
+        } catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
             return encoding;
         }
     }
@@ -290,9 +288,10 @@ public class DataFlavorUtil {
     static <T> int compareIndices(Map<T, Integer> indexMap,
                                   T obj1, T obj2,
                                   Integer fallbackIndex) {
-        Integer index1 = indexMap.getOrDefault(obj1, fallbackIndex);
-        Integer index2 = indexMap.getOrDefault(obj2, fallbackIndex);
-        return index1.compareTo(index2);
+        // Avoid boxing comparisons; unbox and use Integer.compare for clarity
+        int index1 = indexMap.getOrDefault(obj1, fallbackIndex);
+        int index2 = indexMap.getOrDefault(obj2, fallbackIndex);
+        return Integer.compare(index1, index2);
     }
 
     /**
@@ -608,6 +607,7 @@ public class DataFlavorUtil {
 
             // The flavours are not equal but still not distinguishable.
             // Compare String representations in alphabetical order
+            // Note: use getMimeType() to preserve exact behavior (includes parameters).
             return flavor1.getMimeType().compareTo(flavor2.getMimeType());
         }
     }

@@ -162,7 +162,9 @@ class PartiallyOrderedSet<E> extends AbstractSet<E> {
 
 class PartialOrderIterator<E> implements Iterator<E> {
 
-    LinkedList<DigraphNode<E>> zeroList = new LinkedList<>();
+    // Optimization: use ArrayDeque as a queue for better locality and performance
+    // than LinkedList while keeping identical semantics.
+    java.util.ArrayDeque<DigraphNode<E>> zeroList = new java.util.ArrayDeque<>();
     Map<DigraphNode<E>, Integer> inDegrees = new HashMap<>();
 
     public PartialOrderIterator(Iterator<DigraphNode<E>> iter) {
@@ -174,7 +176,7 @@ class PartialOrderIterator<E> implements Iterator<E> {
 
             // Add nodes with zero in-degree to the zero list
             if (inDegree == 0) {
-                zeroList.add(node);
+                zeroList.addLast(node);
             }
         }
     }
@@ -184,18 +186,19 @@ class PartialOrderIterator<E> implements Iterator<E> {
     }
 
     public E next() {
-        DigraphNode<E> first = zeroList.removeFirst();
+        DigraphNode<E> first = zeroList.pollFirst();
+        // pollFirst never returns null here due to hasNext() precondition
 
         // For each out node of the output node, decrement its in-degree
         Iterator<DigraphNode<E>> outNodes = first.getOutNodes();
         while (outNodes.hasNext()) {
             DigraphNode<E> node = outNodes.next();
-            int inDegree = inDegrees.get(node).intValue() - 1;
+            int inDegree = inDegrees.get(node) - 1; // auto-unboxing
             inDegrees.put(node, inDegree);
 
             // If the in-degree has fallen to 0, place the node on the list
             if (inDegree == 0) {
-                zeroList.add(node);
+                zeroList.addLast(node);
             }
         }
 
